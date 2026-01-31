@@ -1,22 +1,11 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-
-import "./app.css";
+import appStylesHref from "./app.css?url";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 
-export const links = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+export const links = () => [{ rel: "stylesheet", href: appStylesHref }];
 
+// The framework automatically uses this Layout to wrap your app
 export function Layout({ children }) {
   return (
     <html lang="en">
@@ -26,10 +15,12 @@ export function Layout({ children }) {
         <Meta />
         <Links />
       </head>
-      <body>
-        <Header />
-        {children}
-        <Footer />
+      <body className="font-sans text-gray-800 bg-gray-50">
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-grow flex flex-col">{children}</main>
+          <Footer />
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -38,6 +29,7 @@ export function Layout({ children }) {
 }
 
 export default function App() {
+  // FIX: Just return Outlet. Do NOT wrap it in Layout again.
   return <Outlet />;
 }
 
@@ -56,10 +48,10 @@ export function ErrorBoundary({ error }) {
 
   return (
     <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
+      <h1 className="text-2xl font-bold mb-2">{message}</h1>
+      <p className="text-gray-600 mb-4">{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full p-4 overflow-x-auto bg-gray-100 rounded text-sm">
           <code>{stack}</code>
         </pre>
       )}
