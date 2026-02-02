@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  useSearchParams, 
-  useNavigate, 
-  useInRouterContext, 
-  MemoryRouter 
+import {
+  useSearchParams,
+  useNavigate,
+  useInRouterContext,
+  MemoryRouter
 } from 'react-router';
-import { 
-  ArrowLeft, Home, Shield, AlertTriangle, FileText, 
-  Users, Gavel, TrendingUp, XCircle, Search 
+import {
+  ArrowLeft, Home, Shield, AlertTriangle, FileText,
+  Users, Gavel, TrendingUp, XCircle, Search
 } from 'lucide-react';
 
 // --- INTERNAL COMPONENT ---
@@ -55,16 +55,16 @@ const mockPropertyData = {
 // This contains the logic that requires Router context
 function LocationResultContent() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate(); 
-  
+  const navigate = useNavigate();
+
   const query = searchParams.get('q');
   const data = mockPropertyData;
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       {/* Back Button */}
-      <button 
+      <button
         onClick={() => navigate('/')}
         className="mb-6 flex items-center text-gray-500 hover:text-blue-600 transition font-medium"
       >
@@ -92,7 +92,7 @@ function LocationResultContent() {
             <span className="whitespace-nowrap">Zoning: {data.conditions.zoning}</span>
           </div>
         </div>
-        
+
         {/* Score Card */}
         <div className="w-full md:w-auto bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4 min-w-[200px] justify-center md:justify-start">
           <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
@@ -111,7 +111,7 @@ function LocationResultContent() {
 
       {/* Single Column Stack Layout */}
       <div className="flex flex-col gap-6">
-        
+
         {/* Card 1: Ownership and Legal */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
