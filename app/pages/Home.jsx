@@ -1,5 +1,4 @@
 import React from 'react';
-// Updated import path to match your folder structure in Screenshot 4
 import SearchBar from '../components/home/SearchBar'; 
 
 export default function Home() {

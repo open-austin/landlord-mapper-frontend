@@ -10,7 +10,7 @@ export async function searchPropertyData(query) {
   const normalizedQuery = query.toLowerCase();
 
   try {
-    // 1. Try API Search first
+    
     const { data: ownerData } = await supabase
       .from('owners') 
       .select('*')
@@ -21,13 +21,13 @@ export async function searchPropertyData(query) {
       return transformToUiModel(ownerData[0], 'API');
     }
 
-    // 2. Fetch the Parcels JSON file
+   
     const response = await fetch(PARCELS_JSON_URL);
     if (!response.ok) throw new Error('Failed to fetch Parcels feed');
     
     const allParcels = await response.json();
     
-    // FIX: Updated filtering to match your JSON structure (situs_address, title_holders)
+    
     const foundParcel = allParcels.find(p => {
       const address = p.situs_address || '';
       // Check the first title holder if it exists

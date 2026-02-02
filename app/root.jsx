@@ -5,7 +5,7 @@ import Footer from "./components/common/Footer";
 
 export const links = () => [{ rel: "stylesheet", href: appStylesHref }];
 
-// Framework layout: provides <html>, <head>, and injects links/meta/scripts
+
 export function Layout({ children }) {
   return (
     <html lang="en">
@@ -29,7 +29,7 @@ export function Layout({ children }) {
 }
 
 export default function App() {
-  // App renders route content; Layout provides the document shell
+  
   return <Outlet />;
 }
 

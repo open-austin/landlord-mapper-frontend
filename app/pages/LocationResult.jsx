@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { ArrowLeft, Home, Shield, AlertTriangle, FileText, Users, Loader2 } from 'lucide-react';
 import InfoRow from '../components/InfoRow';
-// FIX: Updated to match your lowercase filename: landlordService.js
 import { searchPropertyData } from '../services/landlordService';
 
 export default function LocationResult() {
