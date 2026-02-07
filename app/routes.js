@@ -9,6 +9,8 @@ export default [
 
   route("contact", "pages/Contact.jsx"),
 
+  route("data-sources", "pages/DataSources.jsx"),
+
   // Existing route for About Us
   route("about", "components/aboutUs/AboutUs.jsx")
 ];
