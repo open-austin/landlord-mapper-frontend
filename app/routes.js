@@ -7,6 +7,8 @@ export default [
   // The "/results" path loads the Result component
   route("results", "pages/LocationResult.jsx"),
 
+  route("contact", "pages/Contact.jsx"),
+
   // Existing route for About Us
   route("about", "components/aboutUs/AboutUs.jsx")
 ];
