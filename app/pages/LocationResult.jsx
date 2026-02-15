@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { ArrowLeft, Home, Shield, AlertTriangle, FileText, Users, Loader2 } from 'lucide-react';
+import { ArrowLeft, Home, Shield, AlertTriangle, FileText, Users, Loader2, Map } from 'lucide-react';
 import InfoRow from '../components/InfoRow';
 import { searchPropertyData } from '../services/landlordService';
 
@@ -15,31 +15,17 @@ export default function LocationResult() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!query) {
-        setLoading(false);
-        setError(true);
-        return;
-      }
-
+      if (!query) return;
       setLoading(true);
       setError(false);
-
-      try {
-        const result = await searchPropertyData(query);
-
-        if (result) {
-          setData(result);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error("Search failed:", err);
+      const result = await searchPropertyData(query);
+      if (result) {
+        setData(result);
+      } else {
         setError(true);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     }
-
     fetchData();
   }, [query]);
 
@@ -62,11 +48,7 @@ export default function LocationResult() {
         </button>
         <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">No results found</h2>
-          <p className="text-gray-500 mb-6">
-            {query
-              ? `We couldn't find any properties matching "${query}".`
-              : "Enter an address to see results."}
-          </p>
+          <p className="text-gray-500 mb-6">We couldn't find any properties matching "{query}".</p>
           <button onClick={() => navigate('/')} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             Try Another Search
           </button>
@@ -93,7 +75,12 @@ export default function LocationResult() {
             <span>{data.address}</span>
           </h1>
           <div className="flex flex-wrap gap-2 mt-2 ml-1 text-sm text-gray-500">
-            <span className="whitespace-nowrap">Zoning: {data.conditions.zoning}</span>
+            <span className="whitespace-nowrap px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+              {data.conditions.zoning}
+            </span>
+            <span className="whitespace-nowrap px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+              {data.conditions.units} Units
+            </span>
           </div>
         </div>
         
@@ -114,6 +101,7 @@ export default function LocationResult() {
       </div>
 
       <div className="flex flex-col gap-6">
+        
         {/* Ownership */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -122,12 +110,42 @@ export default function LocationResult() {
           </div>
           <div className="px-6 py-2">
             <InfoRow label="Property Owner">{data.ownership.owner}</InfoRow>
-            <InfoRow label="Management Co.">{data.ownership.management}</InfoRow>
+            <InfoRow label="Owner ID">{data.ownership.ownerNum}</InfoRow>
+            <InfoRow label="Last Purchase">{data.ownership.recentPurchase}</InfoRow>
+            <InfoRow label="Management">{data.ownership.management}</InfoRow>
             <InfoRow label="Financials">{data.ownership.financials}</InfoRow>
           </div>
         </div>
 
-        {/* Risk */}
+        {/* Neighborhood Stats (New Section) */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Map className="w-5 h-5 text-purple-600" />
+            <h2 className="text-lg font-semibold text-gray-800">Neighborhood Stats (Zip Code)</h2>
+          </div>
+          <div className="px-6 py-2">
+            <InfoRow label="HHI Rank">{data.socioEconomic.hhiRank}</InfoRow>
+            <InfoRow label="Social Vulnerability (RPL)">{data.socioEconomic.rplThemes}</InfoRow>
+          </div>
+        </div>
+
+        {/* Property Conditions */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-gray-500" />
+            <h2 className="text-lg font-semibold text-gray-800">Property Conditions</h2>
+          </div>
+          <div className="px-6 py-2">
+            <InfoRow label="Total Units">{data.conditions.units}</InfoRow>
+            <InfoRow label="Year Built">{data.conditions.yearBuilt}</InfoRow>
+            <InfoRow label="Total Area">{data.conditions.totalArea}</InfoRow>
+            <InfoRow label="Zoning">{data.conditions.zoning}</InfoRow>
+            <InfoRow label="State Tax Code">{data.conditions.taxCode}</InfoRow>
+            <InfoRow label="Code Complaints">{data.conditions.codeComplaints}</InfoRow>
+          </div>
+        </div>
+
+        {/* Tenant Risk */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-orange-500" />
@@ -138,19 +156,6 @@ export default function LocationResult() {
             <InfoRow label="Retaliation Risk">{data.tenantRisk.retaliationRisk}</InfoRow>
             <InfoRow label="Known Lawsuits">{data.tenantRisk.lawsuits}</InfoRow>
             <InfoRow label="Rent Increases">{data.tenantRisk.rentIncreases}</InfoRow>
-          </div>
-        </div>
-
-        {/* Conditions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">Property Conditions</h2>
-          </div>
-          <div className="px-6 py-2">
-            <InfoRow label="Building Size">{data.conditions.buildingSize}</InfoRow>
-            <InfoRow label="Code Violations">{data.conditions.codeViolations}</InfoRow>
-            <InfoRow label="Inspection">{data.conditions.inspectionResults}</InfoRow>
           </div>
         </div>
 

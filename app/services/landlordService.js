@@ -5,8 +5,106 @@ const PARCELS_JSON_URL = 'https://kuuvyfrchzsodnqitchn.supabase.co/storage/v1/ob
 /**
  * Main search function
  */
-
 export async function searchPropertyData(query) {
+  if (!query) return null;
+  const normalizedQuery = query.toLowerCase().trim();
+
+  try {
+    // 1. Try API Search first
+    const { data: ownerData } = await supabase
+      .from('owners') 
+      .select('*')
+      .ilike('address', `%${query}%`)
+      .limit(1);
+
+    if (ownerData && ownerData.length > 0) {
+      return transformToUiModel(ownerData[0], 'API');
+    }
+
+    // 2. Fetch the Parcels JSON file
+    const response = await fetch(PARCELS_JSON_URL);
+    if (!response.ok) throw new Error('Failed to fetch Parcels feed');
+    
+    const allParcels = await response.json();
+    
+    // Search logic: Check Situs Address OR Owner Mailing Address
+    const foundParcel = allParcels.find(p => {
+      const situsAddress = (p.situs_address || '').toLowerCase();
+      if (situsAddress.includes(normalizedQuery)) return true;
+
+      if (Array.isArray(p.title_holders)) {
+        return p.title_holders.some(holder => 
+          (holder.mailing_address || '').toLowerCase().includes(normalizedQuery)
+        );
+      }
+      return false;
+    });
+
+    if (foundParcel) {
+      return transformToUiModel(foundParcel, 'JSON');
+    }
+
+    return null;
+
+  } catch (error) {
+    console.error("Search failed:", error);
+    return null;
+  }
+}
+
+function transformToUiModel(data, source) {
+  // Normalize Address
+  let address = data.address || data.property_address;
+  if (source === 'JSON') address = data.situs_address;
+
+  // Normalize Owner Name: Prefer scraped name, then API name, then title holders
+  let owner = data.owner_name_scraped || data.owner_name || data.name;
+  if (source === 'JSON' && !owner && data.title_holders && data.title_holders.length > 0) {
+    owner = data.title_holders[0].name;
+  }
+
+  return {
+    address: address || "Address Unknown",
+    viabilityScore: data.viability_score || 75,
+    viabilityLabel: "Calculated from Data",
+    
+    ownership: {
+      owner: owner || "Unknown Owner",
+      ownerNum: data.Owner_num || "N/A", // New field
+      recentPurchase: data.Recent_purchase_date || "N/A", // New field
+      management: data.management_company || "Not Listed",
+      financials: data.financial_notes || `Source: ${source}`,
+    },
+    
+    tenantRisk: {
+      evictions: data.eviction_count ? `${data.eviction_count} filings` : "No recent filings found",
+      retaliationRisk: data.risk_level || "Low",
+      lawsuits: data.has_lawsuits ? "Yes - Active Records" : "None found",
+      rentIncreases: data.rent_increase_avg || "Data Unavailable",
+    },
+    
+    conditions: {
+      units: data.property_units || data.units || "N/A", // New field
+      yearBuilt: data.propertyProf_YearBuilt || data.YearBuilt || "N/A", // New field
+      totalArea: data.propertyProf_imprvTotalArea ? `${data.propertyProf_imprvTotalArea} sqft` : "N/A", // New field
+      zoning: data.propertyProf_zoning || data.zoning || "Residential",
+      taxCode: data.propertyProf_state_tax_code || "N/A", // New field
+      codeComplaints: data.code_complaints || data.violation_count || "None Reported", // Updated mapping
+      inspectionResults: data.inspection_status || "Pending",
+    },
+
+    socioEconomic: {
+      hhiRank: data.HHI_rank ? `${(data.HHI_rank * 100).toFixed(1)}%` : "N/A", // Assuming rank is decimal, formatting as %
+      rplThemes: data.rpl_themes || "N/A",
+    },
+    
+    organizing: {
+      contacts: "0 leads in CRM",
+      affinities: "None listed",
+    },
+  };
+}
+/*export async function searchPropertyData(query) {
   if (!query) return null;
   const normalizedQuery = query.toLowerCase().trim();
 
@@ -97,7 +195,7 @@ function transformToUiModel(data, source) {
       affinities: "None listed",
     },
   };
-}
+}*
 /*export async function searchPropertyData(query) {
   if (!query) return null;
   const normalizedQuery = query.toLowerCase();
