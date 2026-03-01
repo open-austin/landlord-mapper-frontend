@@ -1,10 +1,97 @@
 import { supabase } from '../lib/supabase';
+/**
+ * Main search function utilizing the new /parcel_full REST API endpoint
+ */
+export async function searchPropertyData(query) {
+  if (!query) return null;
+  const normalizedQuery = query.trim();
 
-const PARCELS_JSON_URL = 'https://kuuvyfrchzsodnqitchn.supabase.co/storage/v1/object/public/Parcels/parcels.json';
+  try {
+    // 1. Query the new denormalized parcel_full endpoint
+    // This matches the REST pattern: GET /parcel_full?situs_address=ilike.*{query}*
+    const { data, error } = await supabase
+      .from('parcel_full') 
+      .select('*')
+      .ilike('situs_address', `%${normalizedQuery}%`)
+      .limit(1); 
+
+    if (error) {
+      console.error("Supabase API Error:", error.message);
+      throw error;
+    }
+
+    // 2. Transform the raw API response into UI model
+    if (data && data.length > 0) {
+      return transformToUiModel(data[0]);
+    }
+
+    return null; // No results found
+
+  } catch (error) {
+    console.error("Search failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Maps the raw parcel_full API data to the format expected by LocationResult.jsx
+ */
+function transformToUiModel(data) {
+  // Extract owner from the nested title_holders or landlords array
+  let ownerName = "Unknown Owner";
+  if (data.title_holders && data.title_holders.length > 0) {
+    ownerName = data.title_holders[0].name;
+  } else if (data.landlords && data.landlords.length > 0) {
+    ownerName = data.landlords[0].name;
+  }
+
+  return {
+    address: data.situs_address || "Address Unknown",
+    viabilityScore: data.viability_score || 75,
+    viabilityLabel: "Calculated from Data",
+    
+    ownership: {
+      owner: ownerName,
+      ownerNum: data.Owner_num || "N/A", 
+      recentPurchase: data.Recent_purchase_date || "N/A", 
+      management: data.management_company || "Not Listed",
+      financials: data.financial_notes || `Source: Supabase API`,
+    },
+    
+    tenantRisk: {
+      evictions: data.eviction_count ? `${data.eviction_count} filings` : "No recent filings found",
+      retaliationRisk: data.risk_level || "Low",
+      lawsuits: data.has_lawsuits ? "Yes - Active Records" : "None found",
+      rentIncreases: data.rent_increase_avg || "Data Unavailable",
+    },
+    
+    conditions: {
+      // Prioritizing the new 'units' field from parcel_full docs
+      units: data.units || data.property_units || "N/A", 
+      yearBuilt: data.propertyProf_YearBuilt || data.YearBuilt || "N/A", 
+      totalArea: data.propertyProf_imprvTotalArea ? `${data.propertyProf_imprvTotalArea} sqft` : "N/A", 
+      zoning: data.propertyProf_zoning || data.zoning || "Residential",
+      taxCode: data.propertyProf_state_tax_code || "N/A", 
+      codeComplaints: data.code_complaints || data.violation_count || "None Reported", 
+      inspectionResults: data.inspection_status || "Pending",
+    },
+
+    socioEconomic: {
+      hhiRank: data.HHI_rank ? `${(data.HHI_rank * 100).toFixed(1)}%` : "N/A", 
+      rplThemes: data.rpl_themes || "N/A",
+    },
+    
+    organizing: {
+      contacts: "0 leads in CRM",
+      affinities: "None listed",
+    },
+  };
+}
+//const PARCELS_JSON_URL = 'https://kuuvyfrchzsodnqitchn.supabase.co/storage/v1/object/public/Parcels/parcels.json';
 
 /**
  * Main search function
- */
+ 
 export async function searchPropertyData(query) {
   if (!query) return null;
   const normalizedQuery = query.toLowerCase().trim();
@@ -104,6 +191,7 @@ function transformToUiModel(data, source) {
     },
   };
 }
+  */
 /*export async function searchPropertyData(query) {
   if (!query) return null;
   const normalizedQuery = query.toLowerCase().trim();
