@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabaseKey, supabaseRestUrl } from '../lib/supabase';
 /**
  * Main search function utilizing the new /parcel_full REST API endpoint
  */
@@ -7,18 +7,25 @@ export async function searchPropertyData(query) {
   const normalizedQuery = query.trim();
 
   try {
-    // 1. Query the new denormalized parcel_full endpoint
-    // This matches the REST pattern: GET /parcel_full?situs_address=ilike.*{query}*
-    const { data, error } = await supabase
-      .from('parcel_full') 
-      .select('*')
-      .ilike('situs_address', `%${normalizedQuery}%`)
-      .limit(1); 
+    const url = new URL(`${supabaseRestUrl}/parcel_full`);
+    url.searchParams.set('select', '*');
+    url.searchParams.set('situs_address', `ilike.%${normalizedQuery}%`);
+    url.searchParams.set('limit', '1');
 
-    if (error) {
-      console.error("Supabase API Error:", error.message);
-      throw error;
+    const response = await fetch(url.toString(), {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => null);
+      console.error('Supabase REST Error:', response.status, errorPayload ?? response.statusText);
+      return null;
     }
+
+    const data = await response.json();
 
     // 2. Transform the raw API response into UI model
     if (data && data.length > 0) {
@@ -371,4 +378,3 @@ function transformToUiModel(data, source) {
     },
   };
 }*/
-
