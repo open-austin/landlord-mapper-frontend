@@ -1,4 +1,5 @@
 import { supabaseKey, supabaseRestUrl } from '../lib/supabase';
+
 /**
  * Main search function utilizing the new /parcel_full REST API endpoint
  */
@@ -9,7 +10,9 @@ export async function searchPropertyData(query) {
   try {
     const url = new URL(`${supabaseRestUrl}/parcel_full`);
     url.searchParams.set('select', '*');
-    url.searchParams.set('situs_address', `ilike.%${normalizedQuery}%`);
+    
+    // UPDATED: Use PostgREST 'or' syntax to search address, group_id, and owner_name
+    url.searchParams.set('or', `situs_address.ilike.%${normalizedQuery}%,group_id.ilike.%${normalizedQuery}%,owner_name.ilike.%${normalizedQuery}%`);
     url.searchParams.set('limit', '1');
 
     const response = await fetch(url.toString(), {
@@ -45,7 +48,8 @@ export async function searchPropertyData(query) {
  */
 function transformToUiModel(data) {
   // Extract owner from the nested title_holders or landlords array
-  let ownerName = "Unknown Owner";
+  // UPDATED: Re-added fallback to check root 'owner_name' or 'name' first
+  let ownerName = data.owner_name || data.name || "Unknown Owner";
   if (data.title_holders && data.title_holders.length > 0) {
     ownerName = data.title_holders[0].name;
   } else if (data.landlords && data.landlords.length > 0) {
@@ -59,7 +63,7 @@ function transformToUiModel(data) {
     
     ownership: {
       owner: ownerName,
-      ownerNum: data.Owner_num || "N/A", 
+      ownerNum: data.group_id || data.Owner_num || "N/A", 
       recentPurchase: data.Recent_purchase_date || "N/A", 
       management: data.management_company || "Not Listed",
       financials: data.financial_notes || `Source: Supabase API`,
